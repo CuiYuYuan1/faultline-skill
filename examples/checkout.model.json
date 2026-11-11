@@ -1,0 +1,34 @@
+{
+  "version": 1,
+  "title": "Checkout failure map",
+  "description": "A sample checkout with two user journeys. Explore mandatory inventory, optional recommendations and an unresolved payment adapter. This is a synthetic source fixture, not a live system.",
+  "nodes": [
+    { "id": "checkout", "label": "Place an order", "layer": 0 },
+    { "id": "browse", "label": "Browse products", "layer": 0 },
+    { "id": "orders", "label": "Order service", "layer": 1 },
+    { "id": "catalog", "label": "Catalog service", "layer": 1 },
+    { "id": "inventory", "label": "Inventory", "layer": 2 },
+    { "id": "recommendations", "label": "Recommendations", "layer": 2 },
+    { "id": "payments", "label": "Payment provider", "layer": 2 }
+  ],
+  "edges": [
+    { "from": "checkout", "to": "orders", "mode": "required", "reason": "The checkout entrypoint returns createOrder directly; a rejected order operation rejects the journey.", "evidence": [{ "path": "examples/checkout/app.mjs", "line": 19, "endLine": 21 }] },
+    { "from": "browse", "to": "catalog", "mode": "required", "reason": "The browse entrypoint returns browseCatalog directly.", "evidence": [{ "path": "examples/checkout/app.mjs", "line": 23, "endLine": 25 }] },
+    { "from": "orders", "to": "inventory", "mode": "required", "reason": "Order creation awaits an inventory reservation. No fallback catches inventory rejection.", "evidence": [{ "path": "examples/checkout/app.mjs", "line": 2, "endLine": 4 }] },
+    { "from": "catalog", "to": "inventory", "mode": "required", "reason": "The catalog returns inventory.list() without a fallback; an inventory rejection propagates.", "evidence": [{ "path": "examples/checkout/app.mjs", "line": 15, "endLine": 17 }] },
+    { "from": "orders", "to": "recommendations", "mode": "optional", "reason": "Recommendation errors are caught and replaced with an empty suggestions list. The order still completes, with fewer features.", "evidence": [{ "path": "examples/checkout/app.mjs", "line": 5, "endLine": 12 }] },
+    { "from": "orders", "to": "payments", "mode": "unknown", "reason": "The payment adapter is injected and absent from this fixture. The call site awaits authorize(), but does not show how a provider outage maps to an adapter response. Inspect that adapter before deciding whether this outage blocks checkout.", "evidence": [{ "path": "examples/checkout/app.mjs", "line": 2, "endLine": 4 }, { "path": "examples/checkout/README.md", "line": 5 }] }
+  ],
+  "journeys": ["checkout", "browse"],
+  "scenarios": [
+    { "id": "inventory-outage", "label": "Lose inventory", "down": ["inventory"] },
+    { "id": "recommendation-outage", "label": "Lose recommendations", "down": ["recommendations"] },
+    { "id": "payment-outage", "label": "Lose payment provider", "down": ["payments"] }
+  ],
+  "limitations": [
+    "This is a synthetic sample, not a production architecture or a live health check.",
+    "Results follow a Boolean dependency model. They do not establish capacity, latency, outage probability, retries or recovery time.",
+    "Payment adapter behavior is unresolved. A source reference confirms a location, not the correctness of an interpretation.",
+    "The fingerprint covers only cited files at render time. It does not detect later edits or cover uncited code, runtime configuration or external services."
+  ]
+}

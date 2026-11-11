@@ -1,0 +1,13 @@
+{
+  "name": "faultline-skill",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Turn repositories into source-linked, offline failure rehearsals.",
+  "type": "module",
+  "license": "MIT",
+  "engines": { "node": ">=22" },
+  "scripts": {
+    "test": "node --test tests/*.test.mjs",
+    "check:demo": "node scripts/faultline.mjs check examples/checkout.model.json --source ."
+  }
+}
